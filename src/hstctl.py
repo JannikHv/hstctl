@@ -17,19 +17,22 @@ class HstArgumentParser(argparse.ArgumentParser):
         print('Hstctl v{} by {}.\n'.format(__version__, __author__))
         print('Usage: hstctl [OPTIONS]\n')
         print('Options:')
-        print('  -h / --help               - Print help.')
-        print('  -i / --ips      IPS       - IPs specifier.')
-        print('  -a / --add      HOSTNAMES - Add hostnames to entries by IPs (-i).')
-        print('  -r / --remove   HOSTNAMES - Remove hostnames from entries by IPs (-i).')
-        print('  -e / --enable   IPS       - Enable entries by given IPs.')
-        print('  -d / --disable  IPS       - Disable entries by given IPs.')
-        print('  -p / --purge    IPS       - Purges entries by given IPs.')
-        print('  -s / --show     IPS       - Show entries of given IPs.')
-        print('  -l / --list               - List all entries.')
-        print('  -o / --optimize           - Optimize your /etc/hosts file (auto: -a/-r/-p/-e/-d).\n')
+        print('  -h / --help                - Print help.')
+        print('  -i / --ips       IPS       - IPs specifier.')
+        print('  -a / --add       HOSTNAMES - Add hostnames to entries by IPs (-i).')
+        print('  -r / --remove    HOSTNAMES - Remove hostnames from entries by IPs (-i).')
+        print('  -e / --enable    IPS       - Enable entries by given IPs.')
+        print('  -d / --disable   IPS       - Disable entries by given IPs.')
+        print('  -p / --purge     IPS       - Purge entries by given IPs.')
+        print('  -c / --comment   COMMENT   - Comment entries by IPs (-i).')
+        print('  -u / --uncomment IPS       - Uncomment entries by given IPs.')
+        print('  -s / --show      IPS       - Show entries of given IPs.')
+        print('  -l / --list                - List all entries.')
+        print('  -o / --optimize            - Optimize your /etc/hosts file (auto: -a/-r/-e/-d/-p/-c/-u).\n')
         print('Parameters:')
         print('  IPS       - IP Addresses (separated by spaces).')
         print('  HOSTNAMES - Hostnames (separated by spaces).')
+        print('  COMMENT   - Comment/Note.')
 
     # Override
     def print_usage(self):
@@ -62,7 +65,7 @@ class HstHelper(object):
 
                     entries.remove(e)
 
-                entries.append(HstEntry(e.ip, hostnames, e.status))
+                entries.append(HstEntry(e.ip, hostnames, e.status, None))
 
         return entries
 
@@ -85,8 +88,8 @@ class HstHelper(object):
 
 
 class HstEntry(object):
-    def __init__(self, ip, hostnames, status):
-        [self.ip, self.hostnames, self.status] = [ip, hostnames, status]
+    def __init__(self, ip, hostnames, status, comment):
+        [self.ip, self.hostnames, self.status, self.comment] = [ip, hostnames, status, comment]
 
     @classmethod
     def new_from_line(cls, line):
@@ -96,10 +99,15 @@ class HstEntry(object):
                 hostnames = [
                     h for h in line[line.index(i) + 1::]
                     if '#' not in ''.join(line[line.index(i) + 1:line.index(h) + 1:])
+                    and '#' not in h
                 ]
-                status    = False if '#' in ''.join(line[:line.index(i):]) else True
+                status    = False if '#' in ''.join(line[:line.index(i) + 1:]) else True
+                comment   = ' '.join(line[line.index(hostnames[-1]) + 1::]) if hostnames else None
 
-                return cls(ip, hostnames, status) if len(hostnames) > 0 else None
+                if comment:
+                    comment = comment[2::] if comment[1] == ' ' else comment[1::]
+
+                return cls(ip, hostnames, status, comment) if len(hostnames) > 0 else None
 
         return None
 
@@ -114,7 +122,7 @@ class Hstctl(object):
 
         for ip in [i for i in ips if i not in [e.ip for e in Hstctl.__entries]]:
             if HstHelper.validate_ip(ip) and len(hostnames) > 0:
-                Hstctl.__entries.append(HstEntry(ip, hostnames, True))
+                Hstctl.__entries.append(HstEntry(ip, hostnames, True, None))
 
     @staticmethod
     def remove_hostnames_by_ips(ips, hostnames):
@@ -140,6 +148,16 @@ class Hstctl(object):
             Hstctl.__entries.remove(e)
 
     @staticmethod
+    def comment_entries_by_ips(ips, comment):
+        for e in [e for e in Hstctl.__entries if e.ip in ips]:
+            e.comment = comment
+
+    @staticmethod
+    def uncomment_entries_by_ips(ips):
+        for e in [e for e in Hstctl.__entries if e.ip in ips]:
+            e.comment = None
+
+    @staticmethod
     def list_entries(ips = []):
         max_len = 4
 
@@ -156,6 +174,9 @@ class Hstctl(object):
                 else:
                     print('\033[1;31;31mDisabled\033[0m ' + e.ip.ljust(max_len, ' '), e.hostnames)
 
+                if e.comment:
+                    print( '\033[1;34;34m  ->\033[0m \033[1;33;33m' + e.comment + '\033[0m \n')
+
     @staticmethod
     def write():
         if not os.access('/etc/hosts', os.W_OK):
@@ -165,9 +186,10 @@ class Hstctl(object):
             f.write('##\n# This file was generated by Hstctl.\n##\n\n')
 
             for e in Hstctl.__entries:
-                status_prefix = '' if e.status else '# '
+                status_prefix  = '' if e.status else '# '
+                comment_prefix = ' # ' + e.comment if e.comment else ''
 
-                f.write(status_prefix + e.ip + ' ' + ' '.join(e.hostnames) + '\n')
+                f.write(status_prefix + e.ip + ' ' + ' '.join(e.hostnames) + comment_prefix + '\n')
 
         f.close()
 
@@ -175,15 +197,17 @@ class Hstctl(object):
 if __name__ == '__main__':
     parser = HstArgumentParser()
 
-    parser.add_argument('-i', '--ips',      action='store',      dest='IPS')
-    parser.add_argument('-a', '--add',      action='store',      dest='ADD_HOSTNAMES')
-    parser.add_argument('-r', '--remove',   action='store',      dest='RM_HOSTNAMES')
-    parser.add_argument('-p', '--purge',    action='store',      dest='PURGE_IPS')
-    parser.add_argument('-e', '--enable',   action='store',      dest='ENABLE_IPS')
-    parser.add_argument('-d', '--disable',  action='store',      dest='DISABLE_IPS')
-    parser.add_argument('-s', '--show',     action='store',      dest='SHOW_IPS')
-    parser.add_argument('-l', '--list',     action='store_true', dest='LIST')
-    parser.add_argument('-o', '--optimize', action='store_true', dest='OPTIMIZE')
+    parser.add_argument('-i', '--ips',       action='store',      dest='IPS')
+    parser.add_argument('-a', '--add',       action='store',      dest='ADD_HOSTNAMES')
+    parser.add_argument('-r', '--remove',    action='store',      dest='RM_HOSTNAMES')
+    parser.add_argument('-e', '--enable',    action='store',      dest='ENABLE_IPS')
+    parser.add_argument('-d', '--disable',   action='store',      dest='DISABLE_IPS')
+    parser.add_argument('-p', '--purge',     action='store',      dest='PURGE_IPS')
+    parser.add_argument('-c', '--comment',   action='store',      dest='ADD_COMMENT')
+    parser.add_argument('-u', '--uncomment', action='store',      dest='RM_COMMENT')
+    parser.add_argument('-s', '--show',      action='store',      dest='SHOW_IPS')
+    parser.add_argument('-l', '--list',      action='store_true', dest='LIST')
+    parser.add_argument('-o', '--optimize',  action='store_true', dest='OPTIMIZE')
 
     args = parser.parse_args()
 
@@ -212,6 +236,17 @@ if __name__ == '__main__':
     if args.PURGE_IPS:
         Hstctl.purge_entries_by_ips(args.PURGE_IPS.split())
         Hstctl.write()
+
+    if args.ADD_COMMENT:
+        if not args.IPS:
+            quit(parser.print_help())
+        else:
+            Hstctl.comment_entries_by_ips(args.IPS.split(), args.ADD_COMMENT)
+            Hstctl.write()
+
+    if args.RM_COMMENT:
+            Hstctl.uncomment_entries_by_ips(args.RM_COMMENT.split())
+            Hstctl.write()
 
     if args.SHOW_IPS:
         Hstctl.list_entries(args.SHOW_IPS.split())

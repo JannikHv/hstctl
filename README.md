@@ -9,27 +9,30 @@ However, you can manually install it by:
 `$ sudo install -Dm 755 hstctl/src/hstctl.py /usr/bin/hstctl`
 
 # Usage
-| Option              | Parameter    | Description                                                       |
-|:--------------------|:-------------|:------------------------------------------------------------------|
-| `-h` / `--help`     | `/`          | Print help.                                                       |\
-| `-i` / `--ips`      | `IPS`        | IPs specifier.                                                    |\
-| `-a` / `--add`      | `HOSTNAMES`  | Add hostnames to entries by IPs (`-i`).                           |\
-| `-r` / `--remove`   | `HOSTNAMES`  | Remove hostnames from entries by IPs (`-i`).                      |\
-| `-e` / `--enable`   | `IPS`        | Enable entries by given IPs.                                      |\
-| `-d` / `--disable`  | `IPS`        | Disable entries by given IPs.                                     |\
-| `-p` / `--purge`    | `IPS`        | Purges entries by given IPs.                                      |\
-| `-s` / `--show`     | `IPS`        | Show entries of given IPs.                                        |\
-| `-l` / `--list`     | `/`          | List all entries.                                                 |\
-| `-o` / `--optimize` | `/`          | Optimize your `/etc/hosts` file (auto: `-a`/`-r`/`-p`/`-e`/`-d`). |
+| Option               | Parameter    | Description                                                                 |
+|:---------------------|:-------------|:----------------------------------------------------------------------------|
+| `-h` / `--help`      | `/`          | Print help.                                                                 |\
+| `-i` / `--ips`       | `IPS`        | IPs specifier.                                                              |\
+| `-a` / `--add`       | `HOSTNAMES`  | Add hostnames to entries by IPs (`-i`).                                     |\
+| `-r` / `--remove`    | `HOSTNAMES`  | Remove hostnames from entries by IPs (`-i`).                                |\
+| `-e` / `--enable`    | `IPS`        | Enable entries by given IPs.                                                |\
+| `-d` / `--disable`   | `IPS`        | Disable entries by given IPs.                                               |\
+| `-p` / `--purge`     | `IPS`        | Purge entries by given IPs.                                                 |\
+| `-c` / `--comment`   | `COMMENT`    | Comment entries by IPs (`-i`).                                              |\
+| `-u` / `--uncomment` | `IPS`        | Uncomment entries by given IPs.                                             |\
+| `-s` / `--show`      | `IPS`        | Show entries of given IPs.                                                  |\
+| `-l` / `--list`      | `/`          | List all entries.                                                           |\
+| `-o` / `--optimize`  | `/`          | Optimize your `/etc/hosts` file (auto: `-a`/`-r`/`-e`/`-d`/`-p`/`-c`/`-u`). |
 
 | Parameter   | Description                         | Example                       |
 |:------------|:------------------------------------|:------------------------------|
 | `IPS`       | IP Addresses (separated by spaces). | `"192.168.12.24 192.168.1.1"` |
 | `HOSTNAMES` | Hostnames (separated by spaces).    | `"github.com google.com"`     |
+| `COMMENT`   | Comment/Note.                       | `"Dev server"`                |
 
 #### Annotations
 An `entry` describes one **IP** paired with one or more **hostnames**.\
-The optimization `-o` automatically applies when changes have been made (`-a`/`-r`/`-p`/`-e`/`-d`).
+The optimization `-o` automatically applies when changes have been made (`-a`/`-r`/`-e`/`-d`/`-p`/`-c`/`-u`).
 
 # Examples
 **Add** hostnames to entries by IPs:\
@@ -46,6 +49,12 @@ The optimization `-o` automatically applies when changes have been made (`-a`/`-
 
 **Purge** entries by IPs:\
 `$ sudo hstctl -p "192.168.12.24 192.168.1.1"`
+
+**Comment** entry by IP:\
+`$ sudo hstctl -i 192.168.12.24 -c "Dev server"`
+
+**Uncomment** entries by IPs:\
+`$ sudo hstctl -u "192.168.12.24 192.168.1.1"`
 
 **Show** entries by IPs:\
 `$ hstctl -s "192.168.12.24 192.168.1.1"`
