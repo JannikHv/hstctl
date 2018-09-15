@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+
+import hstctl
+
+
+if __name__ == '__main__':
+    hstctl.main()

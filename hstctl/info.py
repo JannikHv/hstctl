@@ -1,0 +1,5 @@
+__author__     = 'Jannik Hauptvogel'
+__email__      = 'JannikHv@gmail.com'
+__maintainer__ = 'Jannik Hauptvogel'
+__license__    = 'GPLv2'
+__version__    = '0.2.0'
