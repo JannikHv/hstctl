@@ -73,7 +73,7 @@ Combining options with `-l` will always list you the end-result.
 
 # TODO
 - [ ] Add an option for verbose output.
-- [ ] Create an installer.
+- [x] Create an installer.
 - [ ] Create an AUR package.
 
 # Author
