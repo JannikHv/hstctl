@@ -2,11 +2,15 @@
 `Hstctl` lets you easily manage and structure your `/etc/hosts` file.
 
 # Installation
-Currently there is no installer for this application.\
-However, you can manually install it by:
+Clone the repository:\
+`$ git clone https://github.com/JannikHv/hstctl`
 
-`$ git clone https://github.com/JannikHv/hstctl.git`\
-`$ sudo install -Dm 755 hstctl/src/hstctl.py /usr/bin/hstctl`
+Switch to the repo's directory:\
+`$ cd hstctl`
+
+Install hstctl:\
+`$ sudo python setup.py install`
+
 
 # Usage
 | Option               | Parameter    | Description                                                                 |
