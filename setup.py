@@ -16,7 +16,7 @@ setup(
     version = __version__,
     description = DESCRIPTION,
     long_description = LONG_DESCRIPTION,
-    url = 'https://github.com/JanniKHv/hstctl',
+    url = 'https://github.com/JannikHv/hstctl',
     author = __author__,
     author_email = __email__,
     maintainer = __author__,
