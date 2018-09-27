@@ -4,6 +4,7 @@ import os
 
 from .helper import Helper
 from .utils  import validate_ip
+from .entry  import Entry
 
 
 class Hstctl(object):
